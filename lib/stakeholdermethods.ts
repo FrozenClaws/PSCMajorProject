@@ -11,7 +11,7 @@ export const stakeholderMethods = {
       { name: "license", type: "string" }
     ],
     outputs: []
-  },
+  } as const,
 
   updateRegistration: {
     name: "updateRegistration",
@@ -24,15 +24,13 @@ export const stakeholderMethods = {
       { name: "license", type: "string" }
     ],
     outputs: []
-  },
+  } as const,
 
   getStakeholder: {
     name: "getStakeholder",
     type: "function",
     stateMutability: "view",
-    inputs: [
-      { name: "user", type: "address" }
-    ],
+    inputs: [{ name: "user", type: "address" }],
     outputs: [
       {
         components: [
@@ -48,45 +46,37 @@ export const stakeholderMethods = {
         type: "tuple"
       }
     ]
-  },
+  } as const,
 
   approveStakeholder: {
     name: "approveStakeholder",
     type: "function",
     stateMutability: "nonpayable",
-    inputs: [
-      { name: "user", type: "address" }
-    ],
+    inputs: [{ name: "user", type: "address" }],
     outputs: []
-  },
+  } as const,
 
   rejectStakeholder: {
     name: "rejectStakeholder",
     type: "function",
     stateMutability: "nonpayable",
-    inputs: [
-      { name: "user", type: "address" }
-    ],
+    inputs: [{ name: "user", type: "address" }],
     outputs: []
-  },
+  } as const,
 
   getRegistrationQueue: {
     name: "getRegistrationQueue",
     type: "function",
     stateMutability: "view",
     inputs: [],
-    outputs: [
-      { name: "", type: "address[]" }
-    ]
-  },
+    outputs: [{ name: "", type: "address[]" }]
+  } as const,
 
   stakeholders: {
     name: "stakeholders",
     type: "function",
     stateMutability: "view",
-    inputs: [
-      { name: "user", type: "address" }
-    ],
+    inputs: [{ name: "user", type: "address" }],
     outputs: [
       { name: "name", type: "string" },
       { name: "role", type: "bytes32" },
@@ -96,11 +86,42 @@ export const stakeholderMethods = {
       { name: "approved", type: "bool" },
       { name: "exists", type: "bool" }
     ]
-  }
-};
+  } as const,
 
-export function getMethod(methodName: string) {
-  return Object.values(stakeholderMethods).find(
-    (method) => method.name === methodName
-  );
-}
+  /* -------- AUTO GENERATED GETTERS -------- */
+
+  registrationQueue: {
+    name: "registrationQueue",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "index", type: "uint256" }],
+    outputs: [{ name: "", type: "address" }]
+  } as const,
+
+  registrationQueueIndex: {
+    name: "registrationQueueIndex",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }]
+  } as const,
+
+  isInRegistrationQueue: {
+    name: "isInRegistrationQueue",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  } as const,
+
+  stakeholdersByRole: {
+    name: "stakeholdersByRole",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "role", type: "bytes32" },
+      { name: "index", type: "uint256" }
+    ],
+    outputs: [{ name: "", type: "address" }]
+  } as const
+};

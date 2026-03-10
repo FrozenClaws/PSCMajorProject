@@ -2,7 +2,7 @@
 
 import { prepareContractCall } from "thirdweb";
 import { useSendTransaction } from "thirdweb/react";
-import { registerStakeholderContract } from "@/lib/contracts";
+import { StakeholderContract } from "@/lib/contracts";
 import { waitForReceipt } from "thirdweb";
 import { client } from "@/lib/client";
 import { polygonAmoy as chain } from "thirdweb/chains";
@@ -14,6 +14,7 @@ type Props = {
   detailsIPFSURL: string;
   license: string;
   onSuccess?: () => void;
+  disabled?: boolean;
 };
 
 export default function RegisterStakeholderTx({
@@ -22,7 +23,8 @@ export default function RegisterStakeholderTx({
   location,
   detailsIPFSURL,
   license,
-  onSuccess
+  onSuccess,
+  disabled,
 }: Props) {
 
   const { mutate: sendTx, isPending } = useSendTransaction();
@@ -31,7 +33,7 @@ export default function RegisterStakeholderTx({
   const handleRegister = () => {
 
     const tx = prepareContractCall({
-      contract: registerStakeholderContract,
+      contract: StakeholderContract,
       method: "registerStakeholder",
       params: [
         name,
@@ -57,11 +59,19 @@ export default function RegisterStakeholderTx({
 
   return (
     <button
-      onClick={handleRegister}
-      disabled={isPending}
-      className="w-full flex justify-center py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700"
+      type="button"
+      onClick={disabled ? undefined : handleRegister}
+      disabled={isPending || disabled}
+      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-500/50 bg-emerald-500/90 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-sm shadow-emerald-500/40 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:border-emerald-500/40 disabled:bg-emerald-500/50"
     >
-      {isPending ? "Registering..." : "Register On-Chain"}
+      {isPending ? (
+        <>
+          <span className="h-3 w-3 animate-spin rounded-full border-[2px] border-emerald-900 border-t-transparent" />
+          Registering...
+        </>
+      ) : (
+        "Register"
+      )}
     </button>
   );
 }

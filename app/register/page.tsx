@@ -6,6 +6,8 @@ import { useActiveAccount } from "thirdweb/react";
 import RegisterStakeholderTx from "@/components/registerStakeholder";
 import { upload } from "thirdweb/storage";
 import { client } from "@/lib/client";
+import "@/app/globals.css";
+
 
 const rolesOptions = [
   "MANUFACTURER",
@@ -93,166 +95,210 @@ export default function RegisterPage() {
     }
   };
 
+  const canSubmit =
+    !!formData.name &&
+    !!formData.role &&
+    !!formData.location &&
+    !!formData.license &&
+    !!file;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Register Your Account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Please fill in your details to complete registration
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-              {success}
-            </div>
-          )}
-
-          {/* Name Field */}
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your full name"
-              disabled={isLoading}
-            />
-          </div>
-
-          {/* Role Dropdown */}
-          <div>
-            <label
-              htmlFor="role"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Role
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              disabled={isLoading}
-            >
-              <option value="">Select a role</option>
-              {rolesOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Location Field */}
-          <div>
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Location
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your location"
-              disabled={isLoading}
-            />
-          </div>
-
-          {/* IPFS CID Field */}
-          {/* File Upload */}
-          <div>
-            <label
-              htmlFor="fileUpload"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Upload Supporting Document
-            </label>
-
-            <input
-              type="file"
-              id="fileUpload"
-              accept=".pdf,.png,.jpg,.jpeg"
-              onChange={handleFileChange}
-              className="mt-1 block w-full text-sm text-gray-700"
-              disabled={isLoading}
-            />
-
-            {file && (
-              <p className="text-sm text-gray-500 mt-1">
-                Selected: {file.name}
-              </p>
-            )}
-          </div>
-
-          {/* License ID Field */}
-          <div>
-            <label
-              htmlFor="license"
-              className="block text-sm font-medium text-gray-700"
-            >
-              License ID
-            </label>
-            <input
-              type="text"
-              id="license"
-              name="license"
-              value={formData.license}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter License ID"
-              disabled={isLoading}
-            />
-          </div>
-
-          {/* Submit Button */}
-          {formData.name &&
-            formData.role &&
-            formData.location &&
-            file &&
-            formData.license && (
-              <RegisterStakeholderTx
-                name={formData.name}
-                role={formData.role}
-                location={formData.location}
-                detailsIPFSURL={formData.detailsIPFSURL}
-                license={formData.license}
-                onSuccess={() => {
-                  setSuccess("Registration successful!");
-                  setTimeout(() => router.push("/"), 2000);
-                }}
-              />
-            )}
-        </form>
-
-        <p className="text-center text-sm text-gray-600">
-          Make sure your wallet is connected before registering
-        </p>
+    <main className="relative min-h-screen overflow-hidden bg-[#020617] text-slate-50">
+      {/* Subtle grid background */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 opacity-30"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#0f172a_0,_#020617_55%,_#000_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,_rgba(148,163,184,0.12)_1px,_transparent_1px),linear-gradient(to_bottom,_rgba(148,163,184,0.12)_1px,_transparent_1px)] bg-[size:80px_80px]" />
       </div>
-    </div>
+
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8 lg:px-10 lg:py-10">
+        {/* Header / brand */}
+        <header className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-400/40">
+              <span className="text-sm font-semibold text-emerald-400">Rx</span>
+            </div>
+            <div>
+              <p className="text-base font-semibold tracking-tight">
+                PharmaChain
+              </p>
+              <p className="text-xs text-slate-400">
+                Secure stakeholder onboarding
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="grid w-full gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start">
+            {/* Left: context text */}
+            <section className="space-y-4 max-w-lg">
+              <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                Register as a{" "}
+                <span className="text-emerald-400">Verified Stakeholder</span>
+              </h1>
+              <p className="text-sm text-slate-300 sm:text-base">
+                Provide your regulatory details and supporting documentation to
+                join the PharmaChain network. Your information is anchored on
+                Polygon and linked to IPFS for tamper-proof verification.
+              </p>
+            </section>
+
+            {/* Right: form card – existing functionality preserved */}
+            <section className="w-full max-w-md rounded-3xl border border-slate-800/80 bg-slate-950/70 p-6 shadow-xl shadow-emerald-500/10 backdrop-blur">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Register your account
+                </h2>
+                <p className="mt-1 text-xs text-slate-400">
+                  Please fill in your details to complete registration.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-200">
+                    {error}
+                  </div>
+                )}
+
+                {success && (
+                  <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-200">
+                    {success}
+                  </div>
+                )}
+
+                {/* Name Field */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="name"
+                    className="block text-xs font-medium text-slate-200"
+                  >
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none ring-0 placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                    placeholder="Enter your full name"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Role Dropdown */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="role"
+                    className="block text-xs font-medium text-slate-200"
+                  >
+                    Role
+                  </label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                    disabled={isLoading}
+                  >
+                    <option value="">Select a role</option>
+                    {rolesOptions.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Location Field */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="location"
+                    className="block text-xs font-medium text-slate-200"
+                  >
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                    placeholder="Enter your location"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* File Upload */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="fileUpload"
+                    className="block text-xs font-medium text-slate-200"
+                  >
+                    Upload Supporting Document
+                  </label>
+
+                  <input
+                    type="file"
+                    id="fileUpload"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={handleFileChange}
+                    className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-500/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-200 hover:file:bg-emerald-500/20"
+                    disabled={isLoading}
+                  />
+
+                  {file && (
+                    <p className="mt-1 text-xs text-slate-400">
+                      Selected: {file.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* License ID Field */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="license"
+                    className="block text-xs font-medium text-slate-200"
+                  >
+                    License ID
+                  </label>
+                  <input
+                    type="text"
+                    id="license"
+                    name="license"
+                    value={formData.license}
+                    onChange={handleChange}
+                    className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                    placeholder="Enter License ID"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Submit Button – always visible, disabled until form is complete */}
+                <RegisterStakeholderTx
+                  name={formData.name}
+                  role={formData.role}
+                  location={formData.location}
+                  detailsIPFSURL={formData.detailsIPFSURL}
+                  license={formData.license}
+                  disabled={!canSubmit}
+                  onSuccess={() => {
+                    setSuccess("Registration successful!");
+                    setTimeout(() => router.push("/"), 2000);
+                  }}
+                />
+              </form>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
