@@ -7,11 +7,11 @@ import RegisterStakeholderTx from "@/components/registerStakeholder";
 import { upload } from "thirdweb/storage";
 import { client } from "@/lib/client";
 import "@/app/globals.css";
+import LogoutButton from "@/components/logoutButton";
 
 
 const rolesOptions = [
   "MANUFACTURER",
-  "REGULATOR",
   "CONSUMER",
   "PHARMACY",
   "DISTRIBUTOR",
@@ -21,9 +21,11 @@ const rolesOptions = [
 export default function RegisterPage() {
   const router = useRouter();
   const account = useActiveAccount();
+  console.log(account?.address);
   const [file, setFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
+    user: account?.address as `0x${string}` | undefined,
     name: "",
     role: "",
     location: "",
@@ -74,18 +76,32 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      console.log("Submitting registration form data:", {
+        ...formData,
+        fileName: file.name,
+        walletAddress: account.address,
+      });
+
       // Upload file to IPFS
       const uri = await upload({
         client,
         files: [file],
       });
 
-      const ipfsUrl = uri[0];
+      // `upload` returns a single URI string in thirdweb v5, not an array.
+      // Using `[0]` was giving only the first character (e.g. "i" from "ipfs://...").
+      const ipfsUrl = uri;
 
-      setFormData((prev) => ({
-        ...prev,
-        detailsIPFSURL: ipfsUrl,
-      }));
+      console.log("IPFS upload successful. detailsIPFSURL:", ipfsUrl);
+
+      setFormData((prev) => {
+        const updated = {
+          ...prev,
+          detailsIPFSURL: ipfsUrl,
+        };
+        console.log("Updated formData with detailsIPFSURL:", updated);
+        return updated;
+      });
 
       setSuccess("File uploaded successfully!");
     } catch (err) {
@@ -100,7 +116,8 @@ export default function RegisterPage() {
     !!formData.role &&
     !!formData.location &&
     !!formData.license &&
-    !!file;
+    !!file &&
+    !!formData.detailsIPFSURL;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#020617] text-slate-50">
@@ -129,6 +146,8 @@ export default function RegisterPage() {
               </p>
             </div>
           </div>
+
+          <LogoutButton />
         </header>
 
         {/* Content */}
@@ -259,6 +278,14 @@ export default function RegisterPage() {
                       Selected: {file.name}
                     </p>
                   )}
+
+                  <button
+                    type="submit"
+                    className="mt-3 inline-flex items-center rounded-2xl border border-slate-700/80 bg-slate-900/70 px-3 py-1.5 text-xs font-medium text-slate-100 shadow-sm transition hover:border-emerald-400 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={isLoading || !file}
+                  >
+                    {isLoading ? "Uploading to IPFS..." : "Upload Document"}
+                  </button>
                 </div>
 
                 {/* License ID Field */}
@@ -290,8 +317,17 @@ export default function RegisterPage() {
                   license={formData.license}
                   disabled={!canSubmit}
                   onSuccess={() => {
-                    setSuccess("Registration successful!");
-                    setTimeout(() => router.push("/"), 2000);
+                    setSuccess("Registration successful! Redirecting...");
+                    setError("");
+                    router.push("/waiting");
+                  }}
+                  onError={(err) => {
+                    console.error("Registration failed:", err);
+                    const message =
+                      err instanceof Error
+                        ? err.message
+                        : "Transaction failed. Check console for details.";
+                    setError(message);
                   }}
                 />
               </form>

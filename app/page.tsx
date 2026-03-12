@@ -1,7 +1,7 @@
 "use client";
 
 import { useActiveAccount, useReadContract } from "thirdweb/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConnectWallet from "@/components/connectWallet";
 import { StakeholderContract as contract} from "@/lib/contracts";
@@ -10,7 +10,9 @@ import { ROLE_HASH, ROLE_MAP } from "@/lib/rolemap";
 
 export default function Home() {
   const account = useActiveAccount();
+  console.log(account?.address);
   const router = useRouter();
+  const [shouldRoute, setShouldRoute] = useState(false);
 
   const { data, isLoading } = useReadContract({
     contract,
@@ -21,48 +23,67 @@ export default function Home() {
     },
   });
 
-  const { data: isQueued, isLoading: isQueueLoading } = useReadContract({
+  const { data: hasRole, isLoading: hasRoleLoading } = useReadContract({
     contract,
-    method: "isInRegistrationQueue",
-    params: [account?.address as string],
+    method: "hasRole",
+    params: [ROLE_HASH.ADMIN, account?.address as string],
     queryOptions: {
       enabled: !!account,
     },
   });
 
   useEffect(() => {
-    if (!account || isLoading || isQueueLoading) return;
-  
-    // Case 1: User exists in stakeholder mapping
-    if (data?.exists && data?.approved === true) {
-      const roleHash = data.role as string;
+    if (hasRole) {
+      router.push("/admin");
+      return;
+    }
+    if (!account || isLoading || !shouldRoute) return;
+
+    // thirdweb may return tuples as arrays; normalize to an object
+    const stakeholder = Array.isArray(data)
+      ? {
+          user: data[0] as string,
+          name: data[1] as string,
+          role: data[2] as string,
+          location: data[3] as string,
+          detailsIPFSURL: data[4] as string,
+          license: data[5] as string,
+          approved: data[6] as boolean,
+          exists: data[7] as boolean,
+        }
+      : (data as {
+          user: string;
+          name: string;
+          role: string;
+          location: string;
+          detailsIPFSURL: string;
+          license: string;
+          approved: boolean;
+          exists: boolean;
+        } | null | undefined);
+
+    // Case 1: User exists + approved -> route by role
+    if (stakeholder?.exists === true && stakeholder?.approved === true) {
+      const roleHash = stakeholder.role as string;
       const role = ROLE_MAP[roleHash];
       if (role) {
         router.push(`/${role}`);
       } else {
         router.push("/dashboard"); // fallback if role not mapped
       }
-  
       return;
     }
-  
-    // Case 2: Not approved yet but waiting for approval
-    if (!data?.exists && data?.approved === false && isQueued) {
+
+    // Case 2: Registered but not approved yet, or explicitly queued -> waiting
+    if (
+      (stakeholder?.exists === true && stakeholder?.approved === false)) {
       router.push("/waiting");
       return;
     }
-  
+
     // Case 3: Not registered
     router.push("/register");
-  
-  }, [
-    account,
-    data,
-    isQueued,
-    isLoading,
-    isQueueLoading,
-    router
-  ]);
+  }, [account, data, isLoading, shouldRoute, router]);
 
   return (
     <main className="min-h-screen bg-[#020617] text-slate-50 relative overflow-hidden">
@@ -93,9 +114,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Top-right wallet button – preserves existing functionality */}
+          {/* Top-right wallet button – triggers routing when user signs in */}
           <div className="hidden sm:block">
-            <ConnectWallet />
+            <ConnectWallet onConnected={() => setShouldRoute(true)} />
           </div>
         </header>
 
@@ -123,7 +144,7 @@ export default function Home() {
             {/* Primary actions – re-use existing wallet component */}
             <div className="flex flex-wrap items-center gap-4">
               <div className="sm:hidden">
-                <ConnectWallet />
+                <ConnectWallet onConnected={() => setShouldRoute(true)} />
               </div>
               <button
                 type="button"

@@ -34,6 +34,7 @@ export const stakeholderMethods = {
     outputs: [
       {
         components: [
+          { name: "user", type: "address" },
           { name: "name", type: "string" },
           { name: "role", type: "bytes32" },
           { name: "location", type: "string" },
@@ -78,6 +79,7 @@ export const stakeholderMethods = {
     stateMutability: "view",
     inputs: [{ name: "user", type: "address" }],
     outputs: [
+      { name: "user", type: "address" },
       { name: "name", type: "string" },
       { name: "role", type: "bytes32" },
       { name: "location", type: "string" },
@@ -123,5 +125,44 @@ export const stakeholderMethods = {
       { name: "index", type: "uint256" }
     ],
     outputs: [{ name: "", type: "address" }]
-  } as const
+  } as const,
+
+  hasRole: {
+    name: "hasRole",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "role", type: "bytes32" }, { name: "user", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  } as const,
+
+  revokeRole: {
+    name: "revokeRole",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "role", type: "bytes32" }, { name: "user", type: "address" }],
+    outputs: []
+  } as const,
+
+  getAllStakeholders: {
+    name: "getAllStakeholders",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        components: [
+          { name: "user", type: "address" },
+          { name: "name", type: "string" },
+          { name: "role", type: "bytes32" },
+          { name: "location", type: "string" },
+          { name: "detailsIPFSURL", type: "string" },
+          { name: "license", type: "string" },
+          { name: "approved", type: "bool" },
+          { name: "exists", type: "bool" }
+        ]
+      }
+    ]
+  } as const,
 };

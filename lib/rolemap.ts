@@ -1,11 +1,12 @@
 import { keccak256, toUtf8Bytes } from "ethers";
 
 export const ROLE_HASH = {
-  MANUFACTURER: keccak256(toUtf8Bytes("MANUFACTURER")),
-  DISTRIBUTOR: keccak256(toUtf8Bytes("DISTRIBUTOR")),
-  WHOLESALER: keccak256(toUtf8Bytes("WHOLESALER")),
-  PHARMACY: keccak256(toUtf8Bytes("PHARMACY")),
-  CONSUMER: keccak256(toUtf8Bytes("CONSUMER")),
+  ADMIN: keccak256(toUtf8Bytes("ADMIN")) as `0x${string}`,
+  MANUFACTURER: keccak256(toUtf8Bytes("MANUFACTURER")) as `0x${string}`,
+  DISTRIBUTOR: keccak256(toUtf8Bytes("DISTRIBUTOR")) as `0x${string}`,
+  WHOLESALER: keccak256(toUtf8Bytes("WHOLESALER")) as `0x${string}`,
+  PHARMACY: keccak256(toUtf8Bytes("PHARMACY")) as `0x${string}`,
+  CONSUMER: keccak256(toUtf8Bytes("CONSUMER")) as `0x${string}`,
 };
 
 export const ROLE_MAP: Record<string, string> = {

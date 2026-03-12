@@ -16,14 +16,11 @@ export const StakeholderContract = getContract({
       stakeholderMethods.stakeholders,
       stakeholderMethods.registrationQueue,
       stakeholderMethods.registrationQueueIndex,
-      stakeholderMethods.isInRegistrationQueue,
-      stakeholderMethods.stakeholdersByRole,
-      stakeholderMethods.stakeholders,
-      stakeholderMethods.registrationQueue,
-      stakeholderMethods.registrationQueueIndex,
-      stakeholderMethods.isInRegistrationQueue,
-      stakeholderMethods.stakeholdersByRole,
-      stakeholderMethods.stakeholders,
+      stakeholderMethods.approveStakeholder,
+      stakeholderMethods.rejectStakeholder,  
+      stakeholderMethods.hasRole,
+      stakeholderMethods.revokeRole,
+      stakeholderMethods.getAllStakeholders,
     ]
 });
 

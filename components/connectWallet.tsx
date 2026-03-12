@@ -7,19 +7,22 @@ import { client } from "@/lib/client";
 export const wallets = [
   inAppWallet({
     auth: {
-      options: ["email"],
+      options: ["email", "wallet"],
     },
   }),
-  createWallet("io.metamask"),
 ];
 
-export default function ConnectWallet() {
+type Props = {
+  onConnected?: () => void;
+};
+
+export default function ConnectWallet({ onConnected }: Props) {
   return (
     <ConnectButton
       client={client}
       connectButton={{ label: "Sign in" }}
       accountAbstraction={{
-        chain: polygonAmoy, 
+        chain: polygonAmoy,
         sponsorGas: true,
       }}
       connectModal={{
@@ -37,6 +40,9 @@ export default function ConnectWallet() {
         },
         //fontFamily: "Roboto",
       })}
+      onConnect={() => {
+        onConnected?.();
+      }}
     />
   );
 }

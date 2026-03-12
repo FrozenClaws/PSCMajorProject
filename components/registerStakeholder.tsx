@@ -6,8 +6,10 @@ import { StakeholderContract } from "@/lib/contracts";
 import { waitForReceipt } from "thirdweb";
 import { client } from "@/lib/client";
 import { polygonAmoy as chain } from "thirdweb/chains";
+import { ROLE_HASH } from "@/lib/rolemap";
+import { useActiveAccount } from "thirdweb/react";
 
-type Props = {
+type RegisterProps = {
   name: string;
   role: string;
   location: string;
@@ -15,6 +17,7 @@ type Props = {
   license: string;
   onSuccess?: () => void;
   disabled?: boolean;
+  onError?: (error: unknown) => void;
 };
 
 export default function RegisterStakeholderTx({
@@ -25,35 +28,35 @@ export default function RegisterStakeholderTx({
   license,
   onSuccess,
   disabled,
-}: Props) {
-
+  onError,
+}: RegisterProps) {
+  const account = useActiveAccount();
+  console.log(account);
   const { mutate: sendTx, isPending } = useSendTransaction();
 
-
   const handleRegister = () => {
-
     const tx = prepareContractCall({
       contract: StakeholderContract,
       method: "registerStakeholder",
-      params: [
-        name,
-        role,
-        location,
-        detailsIPFSURL,
-        license
-      ]
+      params: [name, role, location, detailsIPFSURL, license],
     });
 
-    sendTx(tx, {onSuccess: async (result) => {
+    sendTx(tx, {
+      onSuccess: async (result) => {
         console.log("Tx Hash:", result.transactionHash);
         const receipt = await waitForReceipt({
-            client,
-            chain,
-            transactionHash: result.transactionHash,
+          client,
+          chain,
+          transactionHash: result.transactionHash,
         });
         console.log("Receipt:", receipt);
         console.log("Logs:", receipt.logs);
-    },
+        onSuccess?.();
+      },
+      onError: (error) => {
+        console.error("RegisterStakeholder transaction error:", error);
+        onError?.(error);
+      },
     });
   };
 
@@ -75,3 +78,4 @@ export default function RegisterStakeholderTx({
     </button>
   );
 }
+
