@@ -20,6 +20,7 @@ export const stakeholderMethods = {
     inputs: [
       { name: "name", type: "string" },
       { name: "location", type: "string" },
+      { name: "role", type: "string"},
       { name: "detailsIPFSURL", type: "string" },
       { name: "license", type: "string" }
     ],

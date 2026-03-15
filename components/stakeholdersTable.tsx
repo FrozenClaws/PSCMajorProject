@@ -1,12 +1,9 @@
-"use client";
-
-import { useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useActiveAccount, useReadContract } from "thirdweb/react";
 import { StakeholderContract } from "@/lib/contracts";
-import { ROLE_MAP } from "@/lib/rolemap";
 import Table from "./table";
-import { Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { ROLE_HASH } from "@/lib/rolemap";
 
 type Stakeholder = {
   user: string;
@@ -19,29 +16,15 @@ type Stakeholder = {
   exists: boolean;
 };
 
-export default function RegistrationQueue() {
+export default function StakeholdersTable({ role }: { role: string }) {
   const account = useActiveAccount();
   const router = useRouter();
 
-  console.log(account?.address);
-
-  const { data, isLoading, error } = useReadContract({
+  const { data, isLoading, refetch } = useReadContract({
     contract: StakeholderContract,
     method: "getAllStakeholders",
-    from: account?.address,
-    queryOptions: {
-      enabled: !!account
-    }
   });
 
-  console.log(data);
-  console.log(error);
-
-  useEffect(() => {
-    if (account) {
-      console.log("Admin wallet connected:", account.address);
-    }
-  }, [account]);
 
   const stakeholders: Stakeholder[] = useMemo(() => {
     if (!data) return [];
@@ -66,7 +49,7 @@ export default function RegistrationQueue() {
 
           return item as Stakeholder;
         })
-        .filter((s) => s.exists && !s.approved);
+        .filter((s) => s.exists && s.approved);
     }
 
     // Case 2: Encoded as { "0": "tuple(...)[]: addr,name,role,location,ipfs,license,approved,exists" }
@@ -115,7 +98,7 @@ export default function RegistrationQueue() {
           })
           .filter((s): s is Stakeholder => !!s);
 
-        return parsed.filter((s) => s.exists && !s.approved);
+        return parsed.filter((s) => s.exists && s.approved);
       }
     }
 
@@ -123,12 +106,12 @@ export default function RegistrationQueue() {
   }, [data]);
 
   const handleSeeMore = (address: string) => {
-    router.push(`/admin/stakeholder/verify/${address}`);
+    router.push(`/admin/stakeholder/${address}`);
   };
   if (isLoading) return <div className="text-slate-400">Loading...</div>;
   return (
     stakeholders && stakeholders.length > 0 ? (
-        <Table stakeholders={stakeholders} handleSeeMore={handleSeeMore} />
+      role === "all" ? <Table stakeholders={stakeholders} handleSeeMore={handleSeeMore} /> : <Table stakeholders={stakeholders.filter((s) => s.role === ROLE_HASH[role.toUpperCase() as keyof typeof ROLE_HASH])} handleSeeMore={handleSeeMore} />
     ) : (
       <div className="text-slate-400">No stakeholders found</div>
     )

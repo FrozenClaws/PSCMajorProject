@@ -3,11 +3,11 @@
 import "@/app/globals.css";
 import LogoutButton from "@/components/logoutButton";
 import RegistrationQueue from "@/components/registrationQueue";
-import { useActiveAccount } from "thirdweb/react";
+import { useState } from "react";
+import StakeholdersTable from "@/components/stakeholdersTable";
 
 export default function AdminPage() {
-  const account = useActiveAccount();
-  console.log(account);
+  const [roleView, setRoleView] = useState<string>("all");
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#020617] text-slate-50">
       <div
@@ -29,7 +29,7 @@ export default function AdminPage() {
                 PharmaChain Admin
               </p>
               <p className="text-xs text-slate-400">
-                Review and manage stakeholder registrations
+                Review and manage stakeholders
               </p>
             </div>
           </div>
@@ -37,8 +37,44 @@ export default function AdminPage() {
           <LogoutButton />
         </header>
 
-        <section className="flex-1">
-          <RegistrationQueue />
+        <section className="flex-1 space-y-10">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Stakeholder Verification Queue
+                </h2>
+                <p className="mt-1 text-xs text-slate-400">
+                  Pending registrations awaiting manual review and approval.
+                </p>
+              </div>
+            </div>
+            <RegistrationQueue />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-xl font-semibold tracking-tight">
+                Approved Stakeholders
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Filter by role:</span>
+                <select
+                  className="rounded-2xl border border-slate-700/70 bg-slate-900/70 px-3 py-1.5 text-xs text-slate-200 shadow-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                  onChange={(e) => setRoleView(e.target.value)}
+                  value={roleView}
+                >
+              <option value="all">All</option>
+              <option value="MANUFACTURER">Manufacturer</option>
+              <option value="DISTRIBUTOR">Distributor</option>
+              <option value="WHOLESALER">Wholesaler</option>
+              <option value="PHARMACY">Pharmacy</option>
+              <option value="CONSUMER">Consumer</option>
+                </select>
+              </div>
+            </div>
+            <StakeholdersTable role={roleView} />
+          </div>
         </section>
       </div>
     </main>

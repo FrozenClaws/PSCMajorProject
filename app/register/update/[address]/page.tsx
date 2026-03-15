@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useActiveAccount } from "thirdweb/react";
-import RegisterStakeholderTx from "@/components/registerStakeholder";
+import { useActiveAccount, useReadContract } from "thirdweb/react";
 import { upload } from "thirdweb/storage";
 import { client } from "@/lib/client";
 import "@/app/globals.css";
 import LogoutButton from "@/components/logoutButton";
+import { StakeholderContract } from "@/lib/contracts";
+import UpdateStakeholderTx from "@/components/updateStakeholder";
+import { ROLE_MAP } from "@/lib/rolemap";
 
+type Stakeholder = {
+  user: string;
+  name: string;
+  role: string;
+  location: string;
+  detailsIPFSURL: string;
+  license: string;
+  approved: boolean;
+  exists: boolean;
+};
 
 const rolesOptions = [
   "MANUFACTURER",
@@ -18,24 +30,59 @@ const rolesOptions = [
   "WHOLESALER",
 ];
 
-export default function RegisterPage() {
+export default function UpdateRegistrationPage() {
   const router = useRouter();
   const account = useActiveAccount();
-  console.log(account?.address);
-  const [file, setFile] = useState<File | null>(null);
 
+  const { data, isLoading: isFetching } = useReadContract({
+    contract: StakeholderContract,
+    method: "getStakeholder",
+    params: [account?.address as string],
+    queryOptions: {
+      enabled: !!account,
+    },
+  });
+
+  const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
-    user: account?.address as `0x${string}` | undefined,
     name: "",
-    role: "",
     location: "",
+    role: "",
     detailsIPFSURL: "",
     license: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!data) return;
+
+    const stakeholder: Stakeholder = Array.isArray(data)
+      ? {
+          user: data[0] as string,
+          name: data[1] as string,
+          role: data[2] as string,
+          location: data[3] as string,
+          detailsIPFSURL: data[4] as string,
+          license: data[5] as string,
+          approved: data[6] as boolean,
+          exists: data[7] as boolean,
+        }
+      : (data as Stakeholder);
+
+    if (stakeholder.exists) {
+      const roleLabel = ROLE_MAP[stakeholder.role as string] ?? "";
+      setFormData({
+        name: stakeholder.name ?? "",
+        location: stakeholder.location ?? "",
+        role: roleLabel,
+        detailsIPFSURL: stakeholder.detailsIPFSURL ?? "",
+        license: stakeholder.license ?? "",
+      });
+    }
+  }, [data]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -54,7 +101,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!account?.address) {
@@ -62,66 +109,44 @@ export default function RegisterPage() {
       return;
     }
 
-    if (
-      !formData.name ||
-      !formData.role ||
-      !formData.location ||
-      !formData.license ||
-      !file
-    ) {
-      setError("Please fill in all fields and upload a file");
+    if (!file) {
+      setError("Please select a file to upload");
       return;
     }
 
-    setIsLoading(true);
+    setIsUploading(true);
 
     try {
-      console.log("Submitting registration form data:", {
-        ...formData,
-        fileName: file.name,
-        walletAddress: account.address,
-      });
-
-      // Upload file to IPFS
       const uri = await upload({
         client,
         files: [file],
       });
 
-      // `upload` returns a single URI string in thirdweb v5, not an array.
-      // Using `[0]` was giving only the first character (e.g. "i" from "ipfs://...").
       const ipfsUrl = uri;
 
-      console.log("IPFS upload successful. detailsIPFSURL:", ipfsUrl);
-
-      setFormData((prev) => {
-        const updated = {
-          ...prev,
-          detailsIPFSURL: ipfsUrl,
-        };
-        console.log("Updated formData with detailsIPFSURL:", updated);
-        return updated;
-      });
+      setFormData((prev) => ({
+        ...prev,
+        detailsIPFSURL: ipfsUrl,
+      }));
 
       setSuccess("File uploaded successfully!");
+      setError("");
     } catch (err) {
       setError("IPFS upload failed");
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
     }
   };
 
   const canSubmit =
     !!formData.name &&
-    !!formData.role &&
     !!formData.location &&
+    !!formData.role &&
     !!formData.license &&
-    !!file &&
     !!formData.detailsIPFSURL;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#020617] text-slate-50">
-      {/* Subtle grid background */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 opacity-30"
@@ -131,7 +156,6 @@ export default function RegisterPage() {
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8 lg:px-10 lg:py-10">
-        {/* Header / brand */}
         <header className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-400/40">
@@ -142,7 +166,7 @@ export default function RegisterPage() {
                 PharmaChain
               </p>
               <p className="text-xs text-slate-400">
-                Secure stakeholder onboarding
+                Update your stakeholder details
               </p>
             </div>
           </div>
@@ -150,34 +174,31 @@ export default function RegisterPage() {
           <LogoutButton />
         </header>
 
-        {/* Content */}
         <div className="flex flex-1 flex-col items-center justify-center">
           <div className="grid w-full gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start">
-            {/* Left: context text */}
-            <section className="space-y-4 max-w-lg">
+            <section className="max-w-lg space-y-4">
               <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                Register as a{" "}
-                <span className="text-emerald-400">Verified Stakeholder</span>
+                Update your{" "}
+                <span className="text-emerald-400">Stakeholder Profile</span>
               </h1>
               <p className="text-sm text-slate-300 sm:text-base">
-                Provide your regulatory details and supporting documentation to
-                join the PharmaChain network. Your information is anchored on
-                Polygon and linked to IPFS for tamper-proof verification.
+                Review and update your regulatory information and supporting
+                documentation. Changes will be written on-chain using your
+                connected wallet.
               </p>
             </section>
 
-            {/* Right: form card – existing functionality preserved */}
             <section className="w-full max-w-md rounded-3xl border border-slate-800/80 bg-slate-950/70 p-6 shadow-xl shadow-emerald-500/10 backdrop-blur">
               <div className="mb-6">
                 <h2 className="text-xl font-semibold tracking-tight">
-                  Register your account
+                  Edit registration details
                 </h2>
                 <p className="mt-1 text-xs text-slate-400">
-                  Please fill in your details to complete registration.
+                  Your current on-chain details are prefilled below.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleUpload} className="space-y-5">
                 {error && (
                   <div className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-200">
                     {error}
@@ -190,7 +211,6 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                {/* Name Field */}
                 <div className="space-y-1.5">
                   <label
                     htmlFor="name"
@@ -206,36 +226,10 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none ring-0 placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
                     placeholder="Enter your full name"
-                    disabled={isLoading}
+                    disabled={isUploading || isFetching}
                   />
                 </div>
 
-                {/* Role Dropdown */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="role"
-                    className="block text-xs font-medium text-slate-200"
-                  >
-                    Role
-                  </label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
-                    disabled={isLoading}
-                  >
-                    <option value="">Select a role</option>
-                    {rolesOptions.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Location Field */}
                 <div className="space-y-1.5">
                   <label
                     htmlFor="location"
@@ -251,12 +245,35 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
                     placeholder="Enter your location"
-                    disabled={isLoading}
+                    disabled={isUploading || isFetching}
                   />
                 </div>
 
-                 {/* License ID Field */}
-                 <div className="space-y-1.5">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="role"
+                    className="block text-xs font-medium text-slate-200"
+                  >
+                    Role
+                  </label>
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                    disabled={isUploading || isFetching}
+                  >
+                    <option value="">Select a role</option>
+                    {rolesOptions.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
                   <label
                     htmlFor="license"
                     className="block text-xs font-medium text-slate-200"
@@ -271,17 +288,16 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
                     placeholder="Enter License ID"
-                    disabled={isLoading}
+                    disabled={isUploading || isFetching}
                   />
                 </div>
 
-                {/* File Upload */}
                 <div className="space-y-1.5">
                   <label
                     htmlFor="fileUpload"
                     className="block text-xs font-medium text-slate-200"
                   >
-                    Upload Supporting Document
+                    Upload New Supporting Document (optional)
                   </label>
 
                   <input
@@ -290,7 +306,7 @@ export default function RegisterPage() {
                     accept=".pdf,.png,.jpg,.jpeg"
                     onChange={handleFileChange}
                     className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-500/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-200 hover:file:bg-emerald-500/20"
-                    disabled={isLoading}
+                    disabled={isUploading || isFetching}
                   />
 
                   {file && (
@@ -302,28 +318,26 @@ export default function RegisterPage() {
                   <button
                     type="submit"
                     className="mt-3 inline-flex items-center rounded-2xl border border-slate-700/80 bg-slate-900/70 px-3 py-1.5 text-xs font-medium text-slate-100 shadow-sm transition hover:border-emerald-400 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={isLoading || !file}
+                    disabled={isUploading || !file}
                   >
-                    {isLoading ? "Uploading to IPFS..." : "Upload Document"}
+                    {isUploading ? "Uploading to IPFS..." : "Upload Document"}
                   </button>
                 </div>
 
-               
-                {/* Submit Button – always visible, disabled until form is complete */}
-                <RegisterStakeholderTx
+                <UpdateStakeholderTx
                   name={formData.name}
-                  role={formData.role}
                   location={formData.location}
+                  role={formData.role}
                   detailsIPFSURL={formData.detailsIPFSURL}
                   license={formData.license}
-                  disabled={!canSubmit}
+                  disabled={!canSubmit || isFetching}
                   onSuccess={() => {
-                    setSuccess("Registration successful! Redirecting...");
+                    setSuccess("Update successful! Redirecting...");
                     setError("");
                     router.push("/waiting");
                   }}
                   onError={(err) => {
-                    console.error("Registration failed:", err);
+                    console.error("Update failed:", err);
                     const message =
                       err instanceof Error
                         ? err.message

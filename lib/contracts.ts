@@ -21,6 +21,7 @@ export const StakeholderContract = getContract({
       stakeholderMethods.hasRole,
       stakeholderMethods.revokeRole,
       stakeholderMethods.getAllStakeholders,
+      stakeholderMethods.updateRegistration,
     ]
 });
 

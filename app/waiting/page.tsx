@@ -90,6 +90,15 @@ export default function WaitingPage() {
               >
                 ← Back to home
               </Link>
+
+              {account?.address && (
+                <Link
+                  href={`/register/update/${account.address}`}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-700/80 bg-slate-900/70 px-4 py-2 text-xs font-medium text-slate-100 shadow-sm transition hover:border-emerald-400 hover:bg-slate-900"
+                >
+                  Update registration details
+                </Link>
+              )}
             </div>
           </div>
         </section>
